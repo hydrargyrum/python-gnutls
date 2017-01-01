@@ -1295,6 +1295,54 @@ gnutls_x509_rdn_get_oid = libgnutls.gnutls_x509_rdn_get_oid
 gnutls_x509_rdn_get_oid.argtypes = [POINTER(gnutls_datum_t), c_int, c_void_p, POINTER(size_t)]
 gnutls_x509_rdn_get_oid.restype = c_int
 
+gnutls_cipher_init = libgnutls.gnutls_cipher_init
+gnutls_cipher_init.argtypes = [POINTER(gnutls_cipher_hd_t), gnutls_cipher_algorithm_t, POINTER(gnutls_datum_t), POINTER(gnutls_datum_t)]
+gnutls_cipher_init.restype = c_int
+
+gnutls_cipher_deinit = libgnutls.gnutls_cipher_deinit
+gnutls_cipher_deinit.argtypes = [gnutls_cipher_hd_t]
+gnutls_cipher_deinit.restype = None
+
+gnutls_cipher_decrypt = libgnutls.gnutls_cipher_decrypt
+gnutls_cipher_decrypt.argtypes = [gnutls_cipher_hd_t, c_void_p, size_t]
+gnutls_cipher_decrypt.restype = c_int
+
+gnutls_cipher_decrypt2 = libgnutls.gnutls_cipher_decrypt2
+gnutls_cipher_decrypt2.argtypes = [gnutls_cipher_hd_t, c_void_p, size_t, c_void_p, size_t]
+gnutls_cipher_decrypt2.restype = c_int
+
+gnutls_cipher_encrypt = libgnutls.gnutls_cipher_encrypt
+gnutls_cipher_encrypt.argtypes = [gnutls_cipher_hd_t, c_void_p, size_t]
+gnutls_cipher_encrypt.restype = c_int
+
+gnutls_cipher_encrypt2 = libgnutls.gnutls_cipher_encrypt2
+gnutls_cipher_encrypt2.argtypes = [gnutls_cipher_hd_t, c_void_p, size_t, c_void_p, size_t]
+gnutls_cipher_encrypt2.restype = c_int
+
+gnutls_cipher_add_auth = libgnutls.gnutls_cipher_add_auth
+gnutls_cipher_add_auth.argtypes = [gnutls_cipher_hd_t, c_void_p, size_t]
+gnutls_cipher_add_auth.restype = c_int
+
+gnutls_cipher_get_block_size = libgnutls.gnutls_cipher_get_block_size
+gnutls_cipher_get_block_size.argtypes = [gnutls_cipher_algorithm_t]
+gnutls_cipher_get_block_size.restype = c_uint
+
+gnutls_cipher_get_iv_size = libgnutls.gnutls_cipher_get_iv_size
+gnutls_cipher_get_iv_size.argtypes = [gnutls_cipher_algorithm_t]
+gnutls_cipher_get_iv_size.restype = c_uint
+
+gnutls_cipher_get_tag_size = libgnutls.gnutls_cipher_get_tag_size
+gnutls_cipher_get_tag_size = [gnutls_cipher_algorithm_t]
+gnutls_cipher_get_tag_size = c_uint
+
+gnutls_cipher_set_iv = libgnutls.gnutls_cipher_set_iv
+gnutls_cipher_set_iv.argtypes = [gnutls_cipher_hd_t, c_void_p, size_t]
+gnutls_cipher_set_iv.restype = None
+
+gnutls_cipher_tag = libgnutls.gnutls_cipher_tag
+gnutls_cipher_tag.argtypes = [gnutls_cipher_hd_t, c_void_p, size_t]
+gnutls_cipher_tag.restype = c_int
+
 gnutls_aead_cipher_init = libgnutls.gnutls_aead_cipher_init
 gnutls_aead_cipher_init.argtypes = [POINTER(gnutls_aead_cipher_hd_t), gnutls_cipher_algorithm_t, POINTER(gnutls_datum_t)]
 gnutls_aead_cipher_init.restype = c_int

@@ -148,6 +148,10 @@ class gnutls_openpgp_privkey_int(Structure):
     _fields_ = []
 gnutls_openpgp_privkey_t = POINTER(gnutls_openpgp_privkey_int)
 
+class api_cipher_hd_st(Structure):
+    _fields_ = []
+gnutls_cipher_hd_t = POINTER(api_cipher_hd_st)
+
 class api_aead_cipher_hd_st(Structure):
     _fields_ = []
 gnutls_aead_cipher_hd_t = POINTER(api_aead_cipher_hd_st)

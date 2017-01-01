@@ -2,7 +2,7 @@
 """GNUTLS crypto support"""
 
 __all__ = ['X509Name', 'X509Certificate', 'X509PrivateKey', 'X509Identity', 'X509CRL', 'DHParams',
-           'AEADCipher']
+           'AEADCipher', 'Cipher']
 
 import re
 from ctypes import *
@@ -341,6 +341,48 @@ class CWrapper(object):
             self.deinit(self._c_object)
 
 
+class Cipher(CWrapper):
+    ctype = gnutls_cipher_hd_t
+
+    @method_args(int, str, str)
+    def __init__(self, algo, key, iv):
+        super(Cipher, self).__init__()
+        dkey = gnutls_datum_t(cast(c_char_p(key), POINTER(c_ubyte)), c_uint(len(key)))
+        div = gnutls_datum_t(cast(c_char_p(iv), POINTER(c_ubyte)), c_uint(len(iv)))
+        gnutls_cipher_init(byref(self._c_object), algo, dkey, div)
+        self.algorithm = algo
+        self.deinit = gnutls_cipher_deinit
+
+    @method_args(str)
+    def set_iv(self, iv):
+        gnutls_cipher_set_iv(self._c_object, c_char_p(iv), c_size_t(len(iv)))
+
+    def add_auth(self, auth):
+        gnutls_cipher_add_auth(self._c_object, c_char_p(auth), c_size_t(len(auth)))
+
+    @method_args(str)
+    def decrypt(self, cipher_text):
+        pt = create_string_buffer(len(cipher_text))
+        gnutls_cipher_decrypt2(self._c_object, c_char_p(cipher_text), c_size_t(cipher_text),
+                               pt, c_size_t(len(pt)))
+        return pt.value
+
+    @method_args(str)
+    def encrypt(self, plain_text):
+        bs = gnutls_cipher_get_block_size(self.algorithm)
+        ct = create_string_buffer(int(math.ceil(len(plain_text) / float(bs)) * bs))
+        gnutls_cipher_encrypt2(self._c_object, c_char_p(plain_text), c_size_t(plain_text),
+                               ct, c_size_t(len(ct)))
+        return ct.value
+
+    @method_args(int)
+    def cipher_tag(self, tag_size):
+        assert tag_size > 0
+        tag = create_string_buffer(tag_size)
+        gnutls_cipher_tag(self._c_object, tag, c_size_t(tag_size))
+        return tag.value
+
+
 class AEADCipher(CWrapper):
     ctype = gnutls_aead_cipher_hd_t
 
@@ -356,20 +398,25 @@ class AEADCipher(CWrapper):
         csize = c_size_t(tag_size + len(plain_text) + 16)
         ct = create_string_buffer(csize.value)
 
-        args = [
-            self._c_object,
-            c_char_p(nonce), c_size_t(len(nonce)),
-            c_char_p(auth), c_size_t(len(auth)),
-            c_size_t(tag_size),
-            c_char_p(plain_text), c_size_t(len(plain_text)),
-            cast(ct, c_void_p), byref(csize)
-        ]
         try:
-            gnutls_aead_cipher_encrypt(*args)
+            gnutls_aead_cipher_encrypt(
+                self._c_object,
+                c_char_p(nonce), c_size_t(len(nonce)),
+                c_char_p(auth), c_size_t(len(auth)),
+                c_size_t(tag_size),
+                c_char_p(plain_text), c_size_t(len(plain_text)),
+                cast(ct, c_void_p), byref(csize)
+            )
         except MemoryError:
             ct = create_string_buffer(csize.value)
-            args[-2:] = [cast(ct, c_void_p), byref(csize)]
-            gnutls_aead_cipher_encrypt(*args)
+            gnutls_aead_cipher_encrypt(
+                self._c_object,
+                c_char_p(nonce), c_size_t(len(nonce)),
+                c_char_p(auth), c_size_t(len(auth)),
+                c_size_t(tag_size),
+                c_char_p(plain_text), c_size_t(len(plain_text)),
+                cast(ct, c_void_p), byref(csize)
+            )
 
         return ct.value
 
@@ -378,19 +425,24 @@ class AEADCipher(CWrapper):
         psize = c_size_t(tag_size + len(cipher_text) + 16)
         pt = create_string_buffer(psize.value)
 
-        args = [
-            self._c_object,
-            c_char_p(nonce), c_size_t(len(nonce)),
-            c_char_p(auth), c_size_t(len(auth)),
-            c_size_t(tag_size),
-            c_char_p(cipher_text), c_size_t(len(cipher_text)),
-            cast(pt, c_void_p), byref(psize)
-        ]
         try:
-            gnutls_aead_cipher_decrypt(*args)
+            gnutls_aead_cipher_decrypt(
+                self._c_object,
+                c_char_p(nonce), c_size_t(len(nonce)),
+                c_char_p(auth), c_size_t(len(auth)),
+                c_size_t(tag_size),
+                c_char_p(cipher_text), c_size_t(len(cipher_text)),
+                cast(pt, c_void_p), byref(psize)
+            )
         except MemoryError:
             pt = create_string_buffer(psize.value)
-            args[-2:] = [cast(pt, c_void_p), byref(psize)]
-            gnutls_aead_cipher_decrypt(*args)
+            gnutls_aead_cipher_decrypt(
+                self._c_object,
+                c_char_p(nonce), c_size_t(len(nonce)),
+                c_char_p(auth), c_size_t(len(auth)),
+                c_size_t(tag_size),
+                c_char_p(cipher_text), c_size_t(len(cipher_text)),
+                cast(pt, c_void_p), byref(psize)
+            )
 
         return pt.value
