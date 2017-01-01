@@ -1295,6 +1295,22 @@ gnutls_x509_rdn_get_oid = libgnutls.gnutls_x509_rdn_get_oid
 gnutls_x509_rdn_get_oid.argtypes = [POINTER(gnutls_datum_t), c_int, c_void_p, POINTER(size_t)]
 gnutls_x509_rdn_get_oid.restype = c_int
 
+gnutls_aead_cipher_init = libgnutls.gnutls_aead_cipher_init
+gnutls_aead_cipher_init.argtypes = [POINTER(gnutls_aead_cipher_hd_t), gnutls_cipher_algorithm_t, POINTER(gnutls_datum_t)]
+gnutls_aead_cipher_init.restype = c_int
+
+gnutls_aead_cipher_deinit = libgnutls.gnutls_aead_cipher_deinit
+gnutls_aead_cipher_deinit.argtypes = [gnutls_aead_cipher_hd_t]
+gnutls_aead_cipher_deinit.restype = None
+
+gnutls_aead_cipher_decrypt = libgnutls.gnutls_aead_cipher_decrypt
+gnutls_aead_cipher_decrypt.argtypes = [gnutls_aead_cipher_hd_t, c_void_p, size_t, c_void_p, size_t, size_t, c_void_p, size_t, c_void_p, POINTER(size_t)]
+gnutls_aead_cipher_decrypt.restype = c_int
+
+gnutls_aead_cipher_encrypt = libgnutls.gnutls_aead_cipher_encrypt
+gnutls_aead_cipher_encrypt.argtypes = [gnutls_aead_cipher_hd_t, c_void_p, size_t, c_void_p, size_t, size_t, c_void_p, size_t, c_void_p, POINTER(size_t)]
+gnutls_aead_cipher_encrypt.restype = c_int
+
 
 # The openpgp related functions are not always present (on windows for example they are missing)
 #

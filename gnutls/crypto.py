@@ -1,7 +1,8 @@
 
 """GNUTLS crypto support"""
 
-__all__ = ['X509Name', 'X509Certificate', 'X509PrivateKey', 'X509Identity', 'X509CRL', 'DHParams']
+__all__ = ['X509Name', 'X509Certificate', 'X509PrivateKey', 'X509Identity', 'X509CRL', 'DHParams',
+           'AEADCipher']
 
 import re
 from ctypes import *
@@ -326,3 +327,70 @@ class DHParams(object):
     def __del__(self):
         self.__deinit(self._c_object)
 
+
+class CWrapper(object):
+    ctype = None
+    deinit = None
+
+    def __init__(self, *args, **kwargs):
+        super(CWrapper, self).__init__(*args, **kwargs)
+        self._c_object = self.ctype()
+
+    def __del__(self):
+        if self.deinit:
+            self.deinit(self._c_object)
+
+
+class AEADCipher(CWrapper):
+    ctype = gnutls_aead_cipher_hd_t
+
+    @method_args(int, str)
+    def __init__(self, algo, key):
+        super(AEADCipher, self).__init__()
+        data = gnutls_datum_t(cast(c_char_p(key), POINTER(c_ubyte)), c_uint(len(key)))
+        gnutls_aead_cipher_init(byref(self._c_object), algo, byref(data))
+        self.deinit = gnutls_aead_cipher_deinit
+
+    @method_args(str, str, int, str)
+    def encrypt(self, nonce, auth, tag_size, plain_text):
+        csize = c_size_t(tag_size + len(plain_text) + 16)
+        ct = create_string_buffer(csize.value)
+
+        args = [
+            self._c_object,
+            c_char_p(nonce), c_size_t(len(nonce)),
+            c_char_p(auth), c_size_t(len(auth)),
+            c_size_t(tag_size),
+            c_char_p(plain_text), c_size_t(len(plain_text)),
+            cast(ct, c_void_p), byref(csize)
+        ]
+        try:
+            gnutls_aead_cipher_encrypt(*args)
+        except MemoryError:
+            ct = create_string_buffer(csize.value)
+            args[-2:] = [cast(ct, c_void_p), byref(csize)]
+            gnutls_aead_cipher_encrypt(*args)
+
+        return ct.value
+
+    @method_args(str, str, int, str)
+    def decrypt(self, nonce, auth, tag_size, cipher_text):
+        psize = c_size_t(tag_size + len(cipher_text) + 16)
+        pt = create_string_buffer(psize.value)
+
+        args = [
+            self._c_object,
+            c_char_p(nonce), c_size_t(len(nonce)),
+            c_char_p(auth), c_size_t(len(auth)),
+            c_size_t(tag_size),
+            c_char_p(cipher_text), c_size_t(len(cipher_text)),
+            cast(pt, c_void_p), byref(psize)
+        ]
+        try:
+            gnutls_aead_cipher_decrypt(*args)
+        except MemoryError:
+            pt = create_string_buffer(psize.value)
+            args[-2:] = [cast(pt, c_void_p), byref(psize)]
+            gnutls_aead_cipher_decrypt(*args)
+
+        return pt.value
